@@ -2,6 +2,7 @@ package crimg
 
 import (
 	"io"
+	"io/fs"
 )
 
 type ImgFormat string
@@ -34,6 +35,7 @@ type ReqGetImageInfo struct {
 type CompressedImageInfo struct {
 	CompressedFilePath string
 	CompressedFileByte []byte
+	FileInfo           fs.FileInfo
 }
 
 type Imager interface {

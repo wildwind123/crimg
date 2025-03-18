@@ -73,7 +73,7 @@ func TestImageInfoGetter(t *testing.T) {
 }
 
 func TestCWebpCompressor(t *testing.T) {
-	t.Skip("manual test")
+	// t.Skip("manual test")
 	var c CWebpCompressor = CWebpCompressor{
 		CWebpBinaryPath: "/home/ganbatte/apps/bins/libwebp-1.5.0-linux-x86-64/bin/cwebp",
 		ImageInfoGetter: &DefaultImageGetter{},

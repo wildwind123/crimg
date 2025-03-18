@@ -77,6 +77,13 @@ func (c *CWebpCompressor) CompressImage(req *ReqCompressImage) (*CompressedImage
 	_ = output
 
 	r := &CompressedImageInfo{}
+
+	fileState, err := os.Stat(outFilePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "cant os.Stat")
+	}
+	r.FileInfo = fileState
+
 	if req.ReturnByte {
 		reader, err := os.Open(outFilePath)
 		if err != nil {
