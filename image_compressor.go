@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand/v2"
 	"os"
 	"os/exec"
 	"path"
@@ -37,6 +38,17 @@ func (c *CWebpCompressor) CompressImage(req *ReqCompressImage) (*CompressedImage
 			exPath := filepath.Dir(ex)
 			fileForCompress = path.Join(exPath, req.InputFilePath)
 		}
+	} else if req.InputReader != nil {
+		b, err := io.ReadAll(req.InputReader)
+		if err != nil {
+			return nil, errors.Wrap(err, "cant io.ReadAll")
+		}
+		fPath := path.Join(os.TempDir(), fmt.Sprintf("%d_%d", time.Now().UnixMicro(), rand.IntN(1000)))
+		err = os.WriteFile(fPath, b, os.ModeExclusive|os.ModePerm)
+		if err != nil {
+			return nil, errors.Wrap(err, "cant write file")
+		}
+		fileForCompress = fPath
 	}
 	// cwebp -resize 500 0
 	argWidth := 0
