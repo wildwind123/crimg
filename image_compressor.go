@@ -43,13 +43,46 @@ func (c *CWebpCompressor) CompressImage(req *ReqCompressImage) (*CompressedImage
 		if err != nil {
 			return nil, errors.Wrap(err, "cant io.ReadAll")
 		}
-		fPath := path.Join(os.TempDir(), fmt.Sprintf("%d_%d", time.Now().UnixMicro(), rand.IntN(1000)))
+		fPath := getNewFilePath()
 		err = os.WriteFile(fPath, b, os.ModeExclusive|os.ModePerm)
 		if err != nil {
 			return nil, errors.Wrap(err, "cant write file")
 		}
 		fileForCompress = fPath
 	}
+
+	// if image cmyc convert to rgb
+	file, err := os.Open(fileForCompress)
+	if err != nil {
+		return nil, errors.Wrap(err, "cant open file")
+	}
+	defer file.Close()
+
+	// Decode the image.
+	img, format, err := DecodeImage(file)
+	if err != nil {
+		return nil, errors.Wrap(err, "cant image.Decode")
+	}
+
+	// Check if the image is in CMYK format.
+	if IsCMYK(img) {
+		nFile := getNewFilePath()
+		img = ConvertCMYKToRGB(img)
+		// Save the converted image.
+		outputFile, err := os.Create(nFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "cant create output file")
+		}
+		defer outputFile.Close()
+
+		// Encode the image and save it.
+		err = EncodeImage(outputFile, img, format)
+		if err != nil {
+			return nil, errors.Wrap(err, "cant EncodeImage")
+		}
+		fileForCompress = nFile
+	}
+
 	// cwebp -resize 500 0
 	argWidth := 0
 	argHeight := 0
@@ -82,9 +115,10 @@ func (c *CWebpCompressor) CompressImage(req *ReqCompressImage) (*CompressedImage
 	cmd := exec.Command(c.CWebpBinaryPath, args...)
 
 	// Capture output
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, errors.Wrap(err, "cant run cli command")
+		// if errors.
+		return nil, errors.Wrapf(err, "cant run cli command, --- %s ---", output)
 	}
 	_ = output
 
@@ -112,6 +146,10 @@ func (c *CWebpCompressor) CompressImage(req *ReqCompressImage) (*CompressedImage
 	}
 
 	return r, nil
+}
+
+func getNewFilePath() string {
+	return path.Join(os.TempDir(), fmt.Sprintf("%d_%d", time.Now().UnixMicro(), rand.IntN(1000)))
 }
 
 func calculate(sourceWidth, sourceHeight, maxWidth, maxHeight int) (newWidth, newHeight int) {

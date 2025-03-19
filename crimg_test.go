@@ -96,7 +96,7 @@ func TestCWebpCompressor(t *testing.T) {
 }
 
 func TestCWebpCompressorReader(t *testing.T) {
-	// t.Skip("manual test")
+	t.Skip("manual test")
 	var c CWebpCompressor = CWebpCompressor{
 		CWebpBinaryPath: "/home/ganbatte/apps/bins/libwebp-1.5.0-linux-x86-64/bin/cwebp",
 		ImageInfoGetter: &DefaultImageGetter{},
@@ -119,6 +119,35 @@ func TestCWebpCompressorReader(t *testing.T) {
 	})
 	if err != nil {
 		t.Error(err)
+		return
+	}
+	fmt.Println("path", compressedFilePath.CompressedFilePath)
+}
+
+func TestCWebpCmyc(t *testing.T) {
+	t.Skip("manual test")
+	var c CWebpCompressor = CWebpCompressor{
+		CWebpBinaryPath: "/home/ganbatte/apps/bins/libwebp-1.5.0-linux-x86-64/bin/cwebp",
+		ImageInfoGetter: &DefaultImageGetter{},
+	}
+
+	rr, err := os.Open("fixture/cmyc.jpg")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	compressedFilePath, err := c.CompressImage(&ReqCompressImage{
+		Format:      WebpFormat,
+		InputReader: rr,
+		ImageResize: ImageResize{
+			Height: 500,
+			Width:  500,
+		},
+		ReturnByte: false,
+	})
+	if err != nil {
+		t.Errorf("%+v", err)
 		return
 	}
 	fmt.Println("path", compressedFilePath.CompressedFilePath)
